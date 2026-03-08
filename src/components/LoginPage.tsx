@@ -18,20 +18,18 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-8 space-y-8">
-                {/* Logo / heading */}
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl w-full max-w-sm p-8 space-y-8">
                 <div className="text-center space-y-1">
-                    <div className="text-4xl font-bold text-white tracking-tight">
-                        Sheet<span className="text-indigo-400">Lab</span>
+                    <div className="text-4xl font-bold text-zinc-100 tracking-tight">
+                        Sheet<span className="text-white">Lab</span>
                     </div>
-                    <p className="text-gray-400 text-sm">Real-time collaborative spreadsheets</p>
+                    <p className="text-zinc-400 text-sm">Real-time collaborative spreadsheets</p>
                 </div>
 
-                {/* Google sign-in */}
                 <button
                     onClick={() => signInWithGoogle().catch(() => setError('Google sign-in failed.'))}
-                    className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-gray-900 font-medium rounded-lg px-4 py-2.5 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 text-zinc-100 font-medium rounded-lg px-4 py-2.5 transition-colors shadow-sm"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path
@@ -54,14 +52,12 @@ export default function LoginPage() {
                     Continue with Google
                 </button>
 
-                {/* Divider */}
-                <div className="flex items-center gap-3 text-gray-600 text-sm">
-                    <hr className="flex-1 border-gray-700" />
+                <div className="flex items-center gap-3 text-zinc-500 text-sm">
+                    <hr className="flex-1 border-zinc-800" />
                     or
-                    <hr className="flex-1 border-gray-700" />
+                    <hr className="flex-1 border-zinc-800" />
                 </div>
 
-                {/* Guest / name sign-in */}
                 <div className="space-y-3">
                     <input
                         id="guest-name"
@@ -70,12 +66,12 @@ export default function LoginPage() {
                         value={name}
                         onChange={(e) => { setName(e.target.value); setError(''); }}
                         onKeyDown={(e) => e.key === 'Enter' && handleGuest()}
-                        className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 placeholder-zinc-500 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-zinc-600"
                     />
-                    {error && <p className="text-red-400 text-xs">{error}</p>}
+                    {error && <p className="text-red-500 text-xs">{error}</p>}
                     <button
                         onClick={handleGuest}
-                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg px-4 py-2.5 transition-colors"
+                        className="w-full bg-zinc-100 hover:bg-zinc-300 text-zinc-950 font-medium rounded-lg px-4 py-2.5 transition-colors shadow-sm"
                     >
                         Continue as Guest
                     </button>

@@ -1,19 +1,14 @@
-/**
- * Deterministically derive a color hex from a string UID.
- * Returns one of 10 carefully chosen, accessible colors.
- */
-
 const PALETTE = [
-    '#EF4444', // red
-    '#F97316', // orange
-    '#EAB308', // yellow
-    '#22C55E', // green
-    '#14B8A6', // teal
-    '#3B82F6', // blue
-    '#8B5CF6', // violet
-    '#EC4899', // pink
-    '#06B6D4', // cyan
-    '#84CC16', // lime
+    '#EF4444',
+    '#F97316',
+    '#EAB308',
+    '#22C55E',
+    '#14B8A6',
+    '#3B82F6',
+    '#8B5CF6',
+    '#EC4899',
+    '#06B6D4',
+    '#84CC16',
 ];
 
 export function colorFromUid(uid: string): string {

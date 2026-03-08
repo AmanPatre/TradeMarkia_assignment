@@ -20,15 +20,12 @@ interface UseDocumentReturn {
     updateCell: (cellId: string, value: string, formula: string | undefined, updatedBy: string) => Promise<void>;
 }
 
-/**
- * Subscribe to a document's cells subcollection in real-time and expose
- * a stable `updateCell` function that tracks save status.
- */
+
 export function useDocument(docId: string): UseDocumentReturn {
     const [cells, setCells] = useState<CellMap>({});
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
-    // Real-time listener
+
     useEffect(() => {
         if (!docId) return;
         const cellsRef = collection(db, 'documents', docId, 'cells');
@@ -51,7 +48,7 @@ export function useDocument(docId: string): UseDocumentReturn {
         return unsub;
     }, [docId]);
 
-    // Write a single cell
+
     const updateCell = useCallback(
         async (
             cellId: string,

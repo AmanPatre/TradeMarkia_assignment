@@ -20,7 +20,6 @@ import { auth } from '@/lib/firebase';
 import { colorFromUid } from '@/lib/colors';
 import { AppUser } from '@/types/spreadsheet';
 
-// ─── Context ─────────────────────────────────────────────────────────────────
 
 interface UserContextValue {
     user: AppUser | null;
@@ -32,18 +31,15 @@ interface UserContextValue {
 
 const UserContext = createContext<UserContextValue | null>(null);
 
-// ─── Local-storage keys ──────────────────────────────────────────────────────
 
 const LS_UID = 'collab_uid';
 const LS_NAME = 'collab_name';
 
-// ─── Provider ────────────────────────────────────────────────────────────────
 
 export function UserProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AppUser | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // We listen for Firebase Auth changes first, then fall back to localStorage.
     useEffect(() => {
         const unsub = onAuthStateChanged(auth, (firebaseUser: User | null) => {
             if (firebaseUser) {
@@ -53,7 +49,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
                     color: colorFromUid(firebaseUser.uid),
                 });
             } else {
-                // No Firebase session — try localStorage (guest mode)
                 const storedUid = localStorage.getItem(LS_UID);
                 const storedName = localStorage.getItem(LS_NAME);
                 if (storedUid && storedName) {
@@ -76,7 +71,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         await signInWithPopup(auth, provider);
     }, []);
 
-    /** Guest mode — persist a random uid + chosen name in localStorage */
     const signInWithName = useCallback((name: string) => {
         const uid = uuidv4();
         localStorage.setItem(LS_UID, uid);
@@ -106,7 +100,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     );
 }
 
-// ─── Hook ────────────────────────────────────────────────────────────────────
 
 export function useUser(): UserContextValue {
     const ctx = useContext(UserContext);

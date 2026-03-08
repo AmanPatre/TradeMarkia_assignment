@@ -11,30 +11,28 @@ import {
 import { db } from '@/lib/firebase';
 import { PresenceEntry } from '@/types/spreadsheet';
 
-const HEARTBEAT_INTERVAL = 20_000; // 20 s
-const STALE_THRESHOLD = 60_000; // 60 s — treat as offline
+const HEARTBEAT_INTERVAL = 20_000;
+const STALE_THRESHOLD = 60_000;
 
-/**
- * Manages the current user's presence heartbeat and subscribes to all
- * other collaborators in the document.
- */
+
 export function usePresence(
     docId: string,
     userId: string,
     name: string,
     color: string,
+    activeCell: string | null,
     setPresence: (p: Record<string, PresenceEntry>) => void
 ): void {
-    // ── Heartbeat ──────────────────────────────────────────────────────────────
+
     useEffect(() => {
         if (!docId || !userId) return;
 
         const presRef = doc(db, 'documents', docId, 'presence', userId);
 
         const write = () => {
-            setDoc(presRef, { name, color, lastActive: Date.now() }, { merge: true }).catch(
-                () => { }
-            );
+            const payload: Partial<PresenceEntry> = { name, color, lastActive: Date.now() };
+
+            setDoc(presRef, payload, { merge: true }).catch(() => { });
         };
 
         write();
@@ -46,7 +44,18 @@ export function usePresence(
         };
     }, [docId, userId, name, color]);
 
-    // ── Subscribe to presence collection ──────────────────────────────────────
+    useEffect(() => {
+        if (!docId || !userId) return;
+
+        const presRef = doc(db, 'documents', docId, 'presence', userId);
+        const payload: Partial<PresenceEntry> = {};
+        if (activeCell) payload.activeCell = activeCell;
+        else payload.activeCell = '';
+
+        setDoc(presRef, payload, { merge: true }).catch(() => { });
+    }, [docId, userId, activeCell]);
+
+
     useEffect(() => {
         if (!docId) return;
         const presCol = collection(db, 'documents', docId, 'presence');

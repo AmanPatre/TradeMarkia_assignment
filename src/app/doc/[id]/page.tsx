@@ -23,6 +23,7 @@ export default function DocPage({ params }: PageProps) {
 
     const [docTitle, setDocTitle] = useState('Loading…');
     const [presence, setPresence] = useState<Record<string, PresenceEntry>>({});
+    const [activeCell, setActiveCell] = useState<string | null>(null);
 
     const { cells, saveStatus, updateCell } = useDocument(docId);
 
@@ -35,6 +36,7 @@ export default function DocPage({ params }: PageProps) {
         user?.uid ?? '',
         user?.name ?? '',
         user?.color ?? '#6366F1',
+        activeCell,
         setPresenceStable
     );
 
@@ -58,8 +60,8 @@ export default function DocPage({ params }: PageProps) {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-                <div className="text-gray-400 animate-pulse">Loading…</div>
+            <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+                <div className="text-zinc-500 animate-pulse">Loading…</div>
             </div>
         );
     }
@@ -74,9 +76,9 @@ export default function DocPage({ params }: PageProps) {
         ) : null;
 
     return (
-        <div className="h-screen bg-gray-950 text-white flex flex-col overflow-hidden">
-            <header className="flex-none border-b border-gray-800 px-4 py-2 flex items-center gap-4">
-                <Link href="/" className="text-gray-400 hover:text-white transition-colors text-sm">
+        <div className="h-screen bg-zinc-950 text-white flex flex-col overflow-hidden">
+            <header className="flex-none border-b border-zinc-800 px-4 py-2 flex items-center gap-4">
+                <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">
                     ← Back
                 </Link>
                 <h1 className="font-semibold text-sm flex-1 truncate">{docTitle}</h1>
@@ -91,15 +93,22 @@ export default function DocPage({ params }: PageProps) {
                 </div>
             </header>
 
-            <div className="flex-none px-4 py-1 bg-gray-900 border-b border-gray-800 text-xs text-gray-500">
+            <div className="flex-none px-4 py-1 bg-zinc-900 border-b border-zinc-800 text-xs text-zinc-400">
                 Double-click a cell to edit. Start with{' '}
-                <code className="text-indigo-400">=</code> for formulas (e.g.{' '}
-                <code className="text-indigo-400">=A1+B1</code>,{' '}
-                <code className="text-indigo-400">=SUM(A1:A5)</code>)
+                <code className="text-zinc-300">=</code> for formulas (e.g.{' '}
+                <code className="text-zinc-300">=A1+B1</code>,{' '}
+                <code className="text-zinc-300">=SUM(A1:A5)</code>)
             </div>
 
             <div className="flex-1 overflow-hidden p-2">
-                <SpreadsheetGrid cells={cells} onCellCommit={handleCellCommit} />
+                <SpreadsheetGrid
+                    cells={cells}
+                    onCellCommit={handleCellCommit}
+                    activeCell={activeCell}
+                    onCellSelect={setActiveCell}
+                    presence={presence}
+                    currentUserId={user.uid}
+                />
             </div>
         </div>
     );
