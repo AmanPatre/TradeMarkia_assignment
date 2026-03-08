@@ -1,36 +1,181 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SheetLab — Minimal Real-Time Collaborative Spreadsheet
+
+A lightweight collaborative spreadsheet built with **Next.js 14 App Router**, **TypeScript (strict)**, **Tailwind CSS**, and **Firebase (Firestore + Auth)**.
+
+---
+
+## Architecture Decisions
+
+| Concern | Decision | Rationale |
+|---|---|---|
+| Framework | Next.js 14 App Router | Co-locates pages and server/client boundary control |
+| State | React `useState` + Firestore listeners | No extra global store needed; Firestore IS the source of truth |
+| Auth | Firebase Auth (Google) + localStorage guest | Covers both authenticated and anonymous workflows |
+| Styling | Tailwind CSS | Utility-first, zero config, dark-mode-friendly |
+| Real-time | `onSnapshot` per document | Granular — only the open document's cells are subscribed |
+
+**No Redux / Zustand / React Query** — the Firestore listeners handle reactivity directly, keeping the stack minimal.
+
+---
+
+## Project Structure
+
+```
+src/
+  types/spreadsheet.ts      # All shared TypeScript types + constants
+  lib/
+    firebase.ts             # App init (singleton-guarded)
+    formulas.ts             # Formula evaluator
+    colors.ts               # Deterministic color from UID
+  context/
+    UserContext.tsx          # Auth state (Google + guest), exposed via useUser()
+  hooks/
+    useDocument.ts           # Firestore real-time cell listener + updateCell
+    usePresence.ts           # Heartbeat writer + presence subscriber
+  components/
+    LoginPage.tsx            # Google / guest sign-in UI
+    SpreadsheetGrid.tsx      # 26×50 scrollable grid (React.memo)
+    Cell.tsx                 # Individual cell — select / edit / display
+    Presence.tsx             # Active collaborator avatars
+app/
+  layout.tsx                 # Root layout — wraps children in <UserProvider>
+  page.tsx                   # Dashboard — document list + create
+  doc/[id]/page.tsx          # Spreadsheet editor
+```
+
+---
+
+## Data Model (Firestore)
+
+```
+documents/{docId}
+  title: string
+  createdBy: string          # UID
+  authorName: string
+  updatedAt: Timestamp
+
+documents/{docId}/cells/{cellId}
+  value: string              # Display/stored value
+  formula?: string           # Raw formula (e.g. "=A1+B1")
+  updatedBy: string          # UID of last editor
+  updatedAt: Timestamp
+
+documents/{docId}/presence/{userId}
+  name: string
+  color: string              # Hex color
+  lastActive: number         # Unix ms — used to filter stale entries
+```
+
+Cell IDs use spreadsheet notation: `A1`, `B2`, `Z50`.
+
+---
+
+## Formula Engine Design (`src/lib/formulas.ts`)
+
+Intentionally **minimal** — no AST, no dependency graph, no circular-reference detection.
+
+### Supported Syntax
+
+| Formula | Example |
+|---|---|
+| Addition | `=A1+B1` |
+| Subtraction | `=A1-B1` |
+| Multiplication | `=A1*B1` |
+| Division | `=A1/B1` |
+| SUM range | `=SUM(A1:A5)` |
+
+### How It Works
+
+1. `evaluateFormula(formula, cellValueMap)` receives a pre-built flat map of `cellId → string value`.
+2. It regex-matches either a `SUM(range)` pattern or a single `LEFT OP RIGHT` binary expression.
+3. Referenced cell values are parsed with `parseFloat`, defaulting to `0` for non-numeric content.
+4. Division by zero returns `#DIV/0!`; unrecognized formulas return `#ERROR!`.
+
+The cell value map passed in must already be computed (no recursive evaluation). This means nested formulas like `=SUM(A1:A3)` where individual cells also contain formulas **are not resolved transitively** — a known limitation.
+
+---
+
+## Real-Time Strategy
+
+- **One `onSnapshot` per open document** (cells subcollection).
+- All tabs subscribed to the same document receive updates within ~200ms from Firestore's push infrastructure.
+- React `memo` on `SpreadsheetGrid` prevents the entire grid re-rendering when only a single cell changes.
+- Presence is maintained via a **heartbeat** written every 20 seconds; entries older than 60 seconds are hidden from the UI.
+
+---
+
+## Identity & Colors
+
+- **Google sign-in** via `signInWithPopup` — standard Firebase Auth flow.
+- **Guest mode** — a `uuid` is generated and stored in `localStorage` alongside the chosen display name. The user is treated identically to an authenticated user for all real-time features.
+- Colors are assigned **deterministically** from the user's UID using a hash → palette lookup, so the same user always gets the same color across sessions.
+
+---
+
+## Limitations & Intentionally Omitted Features
+
+| Feature | Status |
+|---|---|
+| Nested formula evaluation | ❌ Not implemented — cells used in formulas must contain raw numbers |
+| Named ranges | ❌ Not implemented |
+| Formatting (bold, color) | ❌ Not implemented |
+| Column/row resize | ❌ Fixed widths only |
+| Undo / redo | ❌ Not implemented |
+| Offline support | ❌ Firestore persistence not enabled |
+| Row/column insert/delete | ❌ Fixed 26×50 grid |
+| Formula bar | ❌ Editing happens directly in the cell |
+| Conflict resolution | ✅ Last-write-wins via Firestore's atomic `setDoc` |
+| Sharing / permissions | ❌ All documents are public to all signed-in users |
+| Tests | ❌ No unit tests — out of scope for assignment |
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### 1. Firebase Setup
+
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable **Firestore** and **Authentication → Google provider**
+3. Copy your web app credentials
+
+### 2. Environment Variables
+
+Copy `.env.local` and fill in your Firebase config:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Firestore Security Rules (recommended)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /documents/{docId} {
+      allow read, write: if request.auth != null;
+      match /cells/{cellId} {
+        allow read, write: if request.auth != null;
+      }
+      match /presence/{userId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Run Locally
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000).
