@@ -2,6 +2,15 @@
 
 A lightweight collaborative spreadsheet built with **Next.js 14 App Router**, **TypeScript (strict)**, **Tailwind CSS**, and **Firebase (Firestore + Auth)**.
 
+<img width="1612" height="867" alt="image" src="https://github.com/user-attachments/assets/86f4a5f4-f816-4c88-a0a2-423901fd9c83" />
+<img width="1917" height="777" alt="image" src="https://github.com/user-attachments/assets/506b7a5d-e6a5-4e28-95eb-d1e756a2e7f8" />
+<img width="1917" height="788" alt="image" src="https://github.com/user-attachments/assets/12bcb939-f63e-4a7f-a412-1ec21433343c" />
+<img width="1918" height="803" alt="image" src="https://github.com/user-attachments/assets/26f0643b-b8fe-43b8-b8a7-49aad360ad18" />
+
+
+
+
+
 ---
 
 ## Architecture Decisions
@@ -179,3 +188,7 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+Live Link : https://trade-markia-assignment.vercel.app/
+
+Explantion Videos : https://www.loom.com/share/dc67dba0ed2644559426530222d9dfd4     https://www.loom.com/share/cd836c22e3e64e3b997b0d5c8c6d5717
+
